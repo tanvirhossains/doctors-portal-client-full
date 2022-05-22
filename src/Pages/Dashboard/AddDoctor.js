@@ -1,10 +1,11 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from 'react-query';
+import { toast } from 'react-toastify';
 import Loading from '../Shared/Loading';
 
 const AddDoctor = () => {
-    const { register, formState: { errors }, handleSubmit } = useForm();
+    const { register, formState: { errors }, handleSubmit , reset } = useForm();
 
     const { isLoading, data: services } = useQuery('repoData', () =>
         fetch('http://localhost:5000/service').then(res =>
@@ -15,8 +16,63 @@ const AddDoctor = () => {
     if (isLoading) {
         return <Loading></Loading>
     }
+    const imageStorageKey = '86f24afb1b0cfae5448127d69c2eacfa';
+
+    /*
+    * 3 ways to store images
+    * 1. Third party storege // Free open public storage is ok for Practice Project
+    * 2. Your own storage in your own server (file system)
+    * 3. Database: Mongodb
+    * 
+    * YUP: to validate file: Search: Yup validation for react hook form
+    */
+
     const onSubmit = async data => {
-        console.log(data);
+        const image = data.image[0]
+
+        const formData = new FormData();
+        formData.append('image', image);
+        console.log(data)
+        const url = `https://api.imgbb.com/1/upload?key=${imageStorageKey}`
+        fetch(url, {
+            method: "POST", //why put didn't work
+            body: formData
+        })
+            .then(res => res.json())
+            .then(result => {
+                console.log("imageBB", result)
+                if (result.success) {
+                    const image = result.data.url
+
+                    const doctor = {
+                        name: data.name,
+                        email: data.email,
+                        specialty: data.specialty,
+                        img: image
+                    }
+                    //send to your database
+                    fetch('http://localhost:5000/doctor', {
+                        method: 'POST',
+                        headers: {
+                            'content-type': 'application/json',
+                            authorization: `Bearer ${localStorage.getItem('accessToken')}`
+                        },
+
+                        body: JSON.stringify(doctor)
+                    })
+                        .then(res => res.json())
+                        .then(inserted => {
+                            console.log('doctor', inserted)
+                            if(inserted.insertedId){
+                                toast.success('Doctor added successfully')
+                                reset()
+                            }
+                            else{
+                                toast.error('Failed to add a doctor ')
+                            }
+                        })
+                }
+            })
     }
 
     return (
@@ -73,11 +129,12 @@ const AddDoctor = () => {
                     <label className="label">
                         <span className="label-text">Specialty</span>
                     </label>
-                    <select {...register("Specialty")} class="select w-full max-w-xs mb-2">
+                    <select {...register("specialty")} class="select w-full max-w-xs mb-2"> 
                         {
                             services.map((service, index) => <option
                                 key={service._id}
-                            >{index + 1} . {service.name}</option>)
+                                value={service.name} //why this line use???
+                            > {service.name}</option>)
                         }
                     </select>
                 </div>
@@ -88,17 +145,17 @@ const AddDoctor = () => {
                     </label>
                     <input
                         type="file"
-                        placeholder="Your Name"
+                        placeholder="Your Photo"
                         className="input input-bordered w-full max-w-xs"
-                        {...register("name", {
+                        {...register("image", {
                             required: {
                                 value: true,
-                                message: 'Name is Required'
+                                message: 'File is Required'
                             }
                         })}
                     />
                     <label className="label">
-                        {errors.name?.type === 'required' && <span className="label-text-alt text-red-500">{errors.name.message}</span>}
+                        {errors.image?.type === 'required' && <span className="label-text-alt text-red-500">{errors.image.message}</span>}
                     </label>
                 </div>
 
