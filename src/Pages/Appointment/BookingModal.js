@@ -6,8 +6,9 @@ import { toast } from 'react-toastify';
 
 const BookingModal = ({ date, treatment, setTreatment, refetch }) => {
     const { _id, name, slots } = treatment;
-    const [user, loading, error] = useAuthState(auth);
+    const [user] = useAuthState(auth);
     const formattedDate = format(date, 'PP');
+
     const handleBooking = event => {
         event.preventDefault();
         const slot = event.target.slot.value;
@@ -31,10 +32,10 @@ const BookingModal = ({ date, treatment, setTreatment, refetch }) => {
         })
             .then(res => res.json())
             .then(data => {
-                if(data.success){
+                if (data.success) {
                     toast(`Appointment is set, ${formattedDate} at ${slot}`)
                 }
-                else{
+                else {
                     toast.error(`Already have and appointment on ${data.booking?.date} at ${data.booking?.slot}`)
                 }
                 setTreatment(null);

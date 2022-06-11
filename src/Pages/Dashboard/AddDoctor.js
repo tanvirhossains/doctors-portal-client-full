@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import Loading from '../Shared/Loading';
 
 const AddDoctor = () => {
-    const { register, formState: { errors }, handleSubmit , reset } = useForm();
+    const { register, formState: { errors }, handleSubmit, reset } = useForm();
 
     const { isLoading, data: services } = useQuery('repoData', () =>
         fetch('http://localhost:5000/service').then(res =>
@@ -20,11 +20,12 @@ const AddDoctor = () => {
 
     /*
     * 3 ways to store images
-    * 1. Third party storege // Free open public storage is ok for Practice Project
+    * 1. Third party storage // Free open public storage is ok for Practice Project
     * 2. Your own storage in your own server (file system)
     * 3. Database: Mongodb
     * 
-    * YUP: to validate file: Search: Yup validation for react hook form
+    * YUP: to validate file:
+    *  Search: Yup validation for react hook form
     */
 
     const onSubmit = async data => {
@@ -36,7 +37,7 @@ const AddDoctor = () => {
         const url = `https://api.imgbb.com/1/upload?key=${imageStorageKey}`
         fetch(url, {
             method: "POST", //why put didn't work
-            body: formData
+            body: formData  //don't json stringify 
         })
             .then(res => res.json())
             .then(result => {
@@ -63,11 +64,11 @@ const AddDoctor = () => {
                         .then(res => res.json())
                         .then(inserted => {
                             console.log('doctor', inserted)
-                            if(inserted.insertedId){
+                            if (inserted.insertedId) {
                                 toast.success('Doctor added successfully')
                                 reset()
                             }
-                            else{
+                            else {
                                 toast.error('Failed to add a doctor ')
                             }
                         })
@@ -129,7 +130,7 @@ const AddDoctor = () => {
                     <label className="label">
                         <span className="label-text">Specialty</span>
                     </label>
-                    <select {...register("specialty")} class="select w-full max-w-xs mb-2"> 
+                    <select {...register("specialty")} class="select w-full max-w-xs mb-2">
                         {
                             services.map((service, index) => <option
                                 key={service._id}
